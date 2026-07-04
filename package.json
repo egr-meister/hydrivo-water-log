@@ -16,10 +16,9 @@
     "expo-clipboard": "~7.1.5",
     "expo-constants": "~17.1.7",
     "expo-font": "~13.3.2",
-    "expo-modules-core": "~2.4.2",
     "expo-status-bar": "~2.2.3",
     "react": "19.0.0",
-    "react-native": "0.79.5"
+    "react-native": "0.79.6"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2"

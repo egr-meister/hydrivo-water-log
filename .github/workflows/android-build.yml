@@ -35,8 +35,9 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Align Expo dependency versions
-        run: npx expo install --fix
+      - name: Align Expo dependency versions (non-blocking)
+        run: npx expo install --fix || true
+        continue-on-error: true
 
       - name: Expo Doctor (non-blocking)
         run: npx expo-doctor || true
