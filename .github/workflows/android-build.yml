@@ -1,0 +1,100 @@
+name: Android Build
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build signed release APK & AAB
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Set up Java (Temurin 17)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android Platform 35 & Build Tools 35.0.0
+        run: |
+          sdkmanager "platforms;android-35" "build-tools;35.0.0"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Align Expo dependency versions
+        run: npx expo install --fix
+
+      - name: Expo Doctor (non-blocking)
+        run: npx expo-doctor || true
+        continue-on-error: true
+
+      - name: Verify Expo dependency versions
+        run: npx expo install --check || true
+        continue-on-error: true
+
+      - name: Decode release keystore from secret
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/hydrivo-release.p12"
+          echo "Keystore written to $RUNNER_TEMP/hydrivo-release.p12"
+
+      - name: Prebuild Android project
+        run: npx expo prebuild --platform android --no-install
+
+      - name: Copy keystore into android/app
+        run: cp "$RUNNER_TEMP/hydrivo-release.p12" android/app/hydrivo-release.p12
+
+      - name: Apply release signing config
+        run: node scripts/apply-android-signing.js
+
+      - name: Build signed release APK
+        working-directory: android
+        env:
+          HYDRIVO_STORE_FILE: hydrivo-release.p12
+          HYDRIVO_STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          HYDRIVO_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          HYDRIVO_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: ./gradlew assembleRelease --no-daemon
+
+      - name: Build signed release AAB
+        working-directory: android
+        env:
+          HYDRIVO_STORE_FILE: hydrivo-release.p12
+          HYDRIVO_STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          HYDRIVO_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          HYDRIVO_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: ./gradlew bundleRelease --no-daemon
+
+      - name: Remove keystore from workspace
+        if: always()
+        run: rm -f android/app/hydrivo-release.p12
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: hydrivo-water-log-release-apk
+          path: android/app/build/outputs/apk/release/*.apk
+          if-no-files-found: error
+
+      - name: Upload AAB artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: hydrivo-water-log-release-aab
+          path: android/app/build/outputs/bundle/release/*.aab
+          if-no-files-found: error

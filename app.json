@@ -1,0 +1,53 @@
+{
+  "expo": {
+    "name": "Hydrivo Water Log",
+    "slug": "hydrivo-water-log",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "hydrivowaterlog",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#E1F0F8"
+    },
+    "assetBundlePatterns": [
+      "assets/icon.png",
+      "assets/adaptive-icon.png",
+      "assets/splash.png"
+    ],
+    "android": {
+      "package": "com.hydrivo.waterlog",
+      "versionCode": 1,
+      "compileSdkVersion": 35,
+      "targetSdkVersion": 35,
+      "edgeToEdgeEnabled": true,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#E1F0F8"
+      },
+      "permissions": [],
+      "blockedPermissions": [
+        "android.permission.INTERNET",
+        "android.permission.ACCESS_NETWORK_STATE"
+      ]
+    },
+    "plugins": [
+      "expo-clipboard",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "compileSdkVersion": 35,
+            "targetSdkVersion": 35,
+            "minSdkVersion": 24,
+            "buildToolsVersion": "35.0.0"
+          }
+        }
+      ],
+      "./plugins/withNoInternetPermission"
+    ]
+  }
+}
